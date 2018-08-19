@@ -32,6 +32,19 @@ import ai.madara.transport.filters.Packet;
 public class KnowledgeBaseUtil implements AggregateFilter {
 
     static {
+        /**
+         * libc++_shared.so
+         libcapnp-0.6.1.so
+         libcapnp-json-0.6.1.so
+         libcapnp-rpc-0.6.1.so
+         libcapnpc-0.6.1.so
+         libGAMS.so
+         libkj-0.6.1.so
+         libkj-async-0.6.1.so
+         libkj-http-0.6.1.so
+         libMADARA.so
+         libzmq.so
+         */
         System.loadLibrary("MADARA");
         System.loadLibrary("GAMS");
     }
@@ -241,6 +254,7 @@ public class KnowledgeBaseUtil implements AggregateFilter {
 
             EventBus.getDefault().post(agentMap);
         }
+
     }
 
     public List<Drone> getAgentMap() {
@@ -270,4 +284,6 @@ public class KnowledgeBaseUtil implements AggregateFilter {
         myKnowledgeBase.print();
 
     }
+
+
 }
