@@ -16,6 +16,7 @@ public class Drone {
     public KnowledgeMap knowledgeMap;
     public String uid;
     public LatLng latLng;
+    public String prefix;
 
     public Drone() {
 

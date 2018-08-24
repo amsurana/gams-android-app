@@ -18,14 +18,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ai.gams.dronecontroller.utils.KnowledgeBaseUtil;
 import ai.gams.dronecontroller.model.Drone;
+import ai.gams.dronecontroller.utils.KnowledgeBaseUtil;
 import ai.madara.exceptions.MadaraDeadObjectException;
 
 /**
  * Created by Amit S on 27/07/18.
  */
-public class URECAlgorithm implements AlgorithmIntf {
+public class PWRACAlgorithm implements AlgorithmIntf {
 
     private List<LatLng> locations = new ArrayList<>();
     private List<Marker> markers = new ArrayList<>();
@@ -34,7 +34,7 @@ public class URECAlgorithm implements AlgorithmIntf {
     private GoogleMap map;
     private Polygon polygon;
 
-    public URECAlgorithm() {
+    public PWRACAlgorithm() {
 
     }
 
@@ -68,7 +68,7 @@ public class URECAlgorithm implements AlgorithmIntf {
                 if (polygon == null) {
                     polygon = map.addPolygon(new PolygonOptions()
                             .add(locations.toArray(new LatLng[0]))
-                            .strokeColor(Color.BLUE)
+                            .strokeColor(Color.GREEN)
                             .fillColor(Color.argb(100, 0xd5, 0xd5, 0xd5)));
                 } else {
                     polygon.setPoints(locations);
@@ -91,7 +91,7 @@ public class URECAlgorithm implements AlgorithmIntf {
 
         for (Drone drone : drones) {
             Map<String, String> params = new HashMap<>();
-            String prefix = "agent." + drone.getId();
+            String dronePrefix = "agent." + drone.getId();
 
 
             /**
@@ -101,23 +101,22 @@ public class URECAlgorithm implements AlgorithmIntf {
              region.0.0=[40.443237, -79.940570];
              region.0.1=[40.443387, -79.940270];
              region.0.2=[40.443187, -79.940098];
-             region.0.3=[40.443077, -79.940398];
+             region.0.3=[40.443077, -79.940398
              */
 
 
-            String region = "region." + drone.getId();
+            String regionPrefix = "region." + drone.getId();
 
-            params.put(region + ".object_type", "1");
-            params.put(region + ".type", "0");
-            params.put(region + ".size", "" + locations.size());
+            params.put(regionPrefix + ".type", "0");
+            params.put(regionPrefix + ".size", "" + locations.size());
 
             int i = 0;
             for (LatLng latLng : locations) {
-                params.put(region + "." + (i++), String.format("[%f,%f]", latLng.latitude, latLng.longitude));
+                params.put(regionPrefix + "." + (i++), String.format("[%f,%f]", latLng.latitude, latLng.longitude));
             }
 
-            params.put(prefix + ".algorithm", "urec");
-            params.put(prefix + ".algorithm.args.area", region);
+            params.put(dronePrefix + ".algorithm", "pwrac");
+            params.put(dronePrefix + ".algorithm.args.area", "region." + drone.getId());
 
             for (Marker m : markers) {
                 m.remove();

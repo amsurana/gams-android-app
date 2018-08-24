@@ -25,8 +25,12 @@ android {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support:design:27.1.1'
+
     implementation 'com.google.android.gms:play-services-maps:15.0.1'
-    //implementation 'ai.madara:madara:3.2.4'
+//    implementation ('ai.madara:madara:3.2.3'){
+//        transitive true
+//    }
     //implementation 'ai.gams:gams:1.2.3'
 
     //This will be removed once 3.2.4 & 1.2.3 is released in Central maven repo.

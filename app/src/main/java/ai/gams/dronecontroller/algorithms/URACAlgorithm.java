@@ -91,7 +91,7 @@ public class URACAlgorithm implements AlgorithmIntf {
 
         for (Drone drone : drones) {
             Map<String, String> params = new HashMap<>();
-            String prefix = "agent." + drone.getId();
+            String agentPrefix = "agent." + drone.getId();
 
 
             /**
@@ -105,18 +105,18 @@ public class URACAlgorithm implements AlgorithmIntf {
              */
 
 
-            String region = "region." + drone.getId();
+            String regionPrefix = "region." + drone.getId();
 
-            params.put(region + ".type", "0");
-            params.put(region + ".size", "" + locations.size());
+            params.put(regionPrefix + ".type", "0");
+            params.put(regionPrefix + ".size", "" + locations.size());
 
             int i = 0;
             for (LatLng latLng : locations) {
-                params.put(region + "." + (i++), String.format("[%f,%f]", latLng.latitude, latLng.longitude));
+                params.put(regionPrefix + "." + (i++), String.format("[%f,%f]", latLng.latitude, latLng.longitude));
             }
 
-            params.put(prefix + ".algorithm", "urac");
-            params.put(prefix + ".algorithm.args.area", "region." + drone.getId());
+            params.put(agentPrefix + ".algorithm", "urac");
+            params.put(agentPrefix + ".algorithm.args.area", "region." + drone.getId());
 
             for (Marker m : markers) {
                 m.remove();

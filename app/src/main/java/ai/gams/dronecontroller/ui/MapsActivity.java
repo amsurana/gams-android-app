@@ -4,12 +4,13 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Spinner;
-import android.widget.TextView;
+import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -31,58 +32,70 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import ai.gams.dronecontroller.utils.KnowledgeBaseUtil;
 import ai.gams.dronecontroller.R;
 import ai.gams.dronecontroller.algorithms.AlgorithmIntf;
 import ai.gams.dronecontroller.algorithms.AlgorithmsFactory;
 import ai.gams.dronecontroller.model.Drone;
+import ai.gams.dronecontroller.utils.KnowledgeBaseUtil;
 import ai.madara.exceptions.MadaraDeadObjectException;
 import ai.madara.knowledge.KnowledgeRecord;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
 
-    private ArrayAdapter<Drone> robotListAdapter;
     private Drone selecedDrone;
-    private Map<Drone, Marker> robotMarkerMap = new HashMap<>();
+    private Map<Drone, Marker> droneMarkerMap = new HashMap<>();
 
     private Handler handler = new Handler();
     private Runnable refreshRunnable = new Runnable() {
         @Override
         public void run() {
-            EventBus.getDefault().post(KnowledgeBaseUtil.getInstance().getAgentMap());
+            EventBus.getDefault().post(KnowledgeBaseUtil.getInstance().getDrones());
         }
     };
 
     private AlgorithmIntf algorithmIntf;
+    private DronesListDialog dronesListDialog;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        Spinner spinner = findViewById(R.id.agents);
-        robotListAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, KnowledgeBaseUtil.getInstance().getAgentMap());
-        robotListAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(robotListAdapter);
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        Button spinner = findViewById(R.id.numDrones);
+        spinner.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                selecedDrone = KnowledgeBaseUtil.getInstance().getAgentMap().get(i);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
+            public void onClick(View view) {
+                showDronesList();
             }
         });
+    }
 
+    private void showDronesList() {
+        dronesListDialog = new DronesListDialog(this);
+        dronesListDialog.show();
+        dronesListDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+    }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_maps, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        KnowledgeBaseUtil.getInstance().cleanup();
+        finish();
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -98,11 +111,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onMessageEvent(List<Drone> agentMap) {
-        robotListAdapter.notifyDataSetChanged();
-        ((TextView) findViewById(R.id.numAgents)).setText("Number of Agents: " + agentMap.size());
-
-        for (Drone r : agentMap) {
+    public void onMessageEvent(List<Drone> drones) {
+        ((Button) findViewById(R.id.numDrones)).setText("Drones (" + drones.size() + ")");
+        for (Drone r : drones) {
             refreshMarker(r);
         }
 
@@ -143,13 +154,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Marker marker = mMap.addMarker(options);
 
             //Remove from Map
-            if (robotMarkerMap.containsKey(drone)) {
-                robotMarkerMap.get(drone).remove();
+            if (droneMarkerMap.containsKey(drone)) {
+                droneMarkerMap.get(drone).remove();
             }
 
-            robotMarkerMap.put(drone, marker);
+            droneMarkerMap.put(drone, marker);
 
-            if (robotMarkerMap.size() == 1) {
+            if (droneMarkerMap.size() == 1) {
                 mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
             }
 
@@ -232,12 +243,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void sendMove(double distance, double bearing) {
         try {
-            if (!robotMarkerMap.containsKey(selecedDrone)) {
+            if (!droneMarkerMap.containsKey(selecedDrone)) {
                 Toast.makeText(this, "The current device is not shown on Map", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            Marker marker = robotMarkerMap.get(selecedDrone);
+            Marker marker = droneMarkerMap.get(selecedDrone);
             LatLng next = getNewLatLng(marker.getPosition(), distance, bearing);
             marker.remove();
 
@@ -249,9 +260,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-    public void showAlgorithmList(View view) {
+    public void showAlgorithmList(final Drone selecedDrone) {
+        dronesListDialog.dismiss();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         final List<String> algoNames = new ArrayList<String>(AlgorithmsFactory.algoMap.keySet());
+        builder.setTitle("Send Algorithm to " + selecedDrone.username);
         builder.setItems(algoNames.toArray(new String[0]), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -267,6 +280,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void sendAlgorithm(View view) {
         findViewById(R.id.send).setVisibility(View.GONE);
+        Toast.makeText(this, "The algorithm is sent to selected drone", Toast.LENGTH_SHORT).show();
         algorithmIntf.send();
     }
+
+
 }

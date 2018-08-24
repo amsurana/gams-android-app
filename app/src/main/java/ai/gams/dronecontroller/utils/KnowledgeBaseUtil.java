@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,6 +55,7 @@ public class KnowledgeBaseUtil implements AggregateFilter {
     private static KnowledgeBaseUtil instance;
     private QoSTransportSettings qoSTransportSettings;
 
+
     public static KnowledgeBaseUtil getInstance() {
         if (instance == null) {
             instance = new KnowledgeBaseUtil();
@@ -66,17 +69,35 @@ public class KnowledgeBaseUtil implements AggregateFilter {
 
     private BaseController controller;
 
-    private List<Drone> agentMap = new ArrayList<>();
+    private List<Drone> drones = new ArrayList<>();
 
     Pattern pattern = Pattern.compile("agent.(\\d+).*");
 
+    private Timer timer = new Timer();
+    private TimerTask pingSender = new TimerTask() {
+        @Override
+        public void run() {
+            try {
+                sendData(self.prefix + ".name", self.username);
+            } catch (MadaraDeadObjectException e) {
+                e.printStackTrace();
+            }
+        }
+    };
 
     private KnowledgeBaseUtil() {
     }
 
-    private void cleanup() {
+    public void cleanup() {
+        try {
+            sendData(self.prefix + ".online", "" + false);
+        } catch (MadaraDeadObjectException e) {
+            e.printStackTrace();
+        }
         qoSTransportSettings.free();
         myKnowledgeBase.free();
+
+        timer.cancel();
     }
 
     public void initKb(Drone self) {
@@ -94,17 +115,18 @@ public class KnowledgeBaseUtil implements AggregateFilter {
             EvalSettings evalSettings = new EvalSettings();
             evalSettings.setDelaySendingModifieds(false);
 
-            int id = new Random().nextInt(100);
-
-            myKnowledgeBase.set(".id", id, evalSettings);
-            myKnowledgeBase.set("agent." + id + ".name", self.username, evalSettings);
-            myKnowledgeBase.set("agent." + id + ".location", "12.12, 77.50, 12", evalSettings);
+            int myId = new Random().nextInt(100);
+            String myPrefix = "agent." + myId;
+            myKnowledgeBase.set(".id", myId, evalSettings);
+            myKnowledgeBase.set(myPrefix + ".name", self.username, evalSettings);
+            myKnowledgeBase.set(myPrefix + ".location", "12.12, 77.50, 12", evalSettings);
 
             this.self = self;
-            this.self.id = "" + id;
-            this.self.knowledgeMap = (myKnowledgeBase.toKnowledgeMap("agent." + id));
+            this.self.id = "" + myId;
+            this.self.prefix = myPrefix;
+            this.self.knowledgeMap = (myKnowledgeBase.toKnowledgeMap("agent." + myId));
 
-            //agentMap.add(this.self);
+            //drones.add(this.self);
 
             //Let's join the swarm
             myKnowledgeBase.sendModifieds();
@@ -194,7 +216,7 @@ public class KnowledgeBaseUtil implements AggregateFilter {
             });
 
 
-            //controller.run(100, 10);
+            timer.scheduleAtFixedRate(pingSender, 5000, 30000);
 
         } catch (MadaraDeadObjectException | GamsDeadObjectException e) {
             e.printStackTrace();
@@ -218,18 +240,6 @@ public class KnowledgeBaseUtil implements AggregateFilter {
     @Override
     public void filter(Packet packet, TransportContext context, Variables variables) throws MadaraDeadObjectException {
 
-//        try {
-//            KnowledgeMap agent;
-//            if (agentMap.containsKey(context.getOriginator())) {
-//                agent = agentMap.get(context.getOriginator());
-//            } else {
-//                String[] keys = packet.getKeys();
-//            },
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-
-
         myKnowledgeBase.print();
 
 
@@ -239,36 +249,34 @@ public class KnowledgeBaseUtil implements AggregateFilter {
             if (matcher.find()) {
                 String index = matcher.group(1);
                 Drone drone = null;
-                if (!agentMap.contains(new Drone(index))) {
+                if (!drones.contains(new Drone(index))) {
                     drone = new Drone(index);
-                    agentMap.add(drone);
+                    drones.add(drone);
                 } else {
-                    drone = agentMap.get(agentMap.indexOf(new Drone(index)));
+                    drone = drones.get(drones.indexOf(new Drone(index)));
                 }
 
                 drone.setKnowledgeMap(myKnowledgeBase.toKnowledgeMap("agent." + index));
                 KnowledgeRecord rec = myKnowledgeBase.get("agent." + index + ".name");
                 drone.username = rec.isValid() ? rec.toString() : "-NA-";
-
+                drone.lastUpdatedTime = System.currentTimeMillis();
+                drone.prefix = "agent." + index;
             }
 
-            EventBus.getDefault().post(agentMap);
+            EventBus.getDefault().post(drones);
         }
 
     }
 
-    public List<Drone> getAgentMap() {
-        return agentMap;
+    public List<Drone> getDrones() {
+        return drones;
     }
 
     public void sendData(String key, String value) throws MadaraDeadObjectException {
         EvalSettings evalSettings = new EvalSettings();
         evalSettings.setDelaySendingModifieds(false);
         myKnowledgeBase.set(key, value, evalSettings);
-
         myKnowledgeBase.sendModifieds(evalSettings);
-
-        myKnowledgeBase.print();
 
     }
 
@@ -278,11 +286,7 @@ public class KnowledgeBaseUtil implements AggregateFilter {
         for (String key : params.keySet()) {
             myKnowledgeBase.set(key, params.get(key), evalSettings);
         }
-
         myKnowledgeBase.sendModifieds(evalSettings);
-
-        myKnowledgeBase.print();
-
     }
 
 
