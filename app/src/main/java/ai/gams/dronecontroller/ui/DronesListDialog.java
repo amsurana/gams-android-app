@@ -1,23 +1,32 @@
 package ai.gams.dronecontroller.ui;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetDialog;
+import android.support.v7.app.AlertDialog;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import ai.gams.dronecontroller.R;
 import ai.gams.dronecontroller.model.Drone;
 import ai.gams.dronecontroller.ui.widget.BottomSheetListView;
+import ai.gams.dronecontroller.ui.widget.CheckableRelativeLayout;
 import ai.gams.dronecontroller.utils.KnowledgeBaseUtil;
+import ai.madara.exceptions.MadaraDeadObjectException;
 
 /**
  * Created by Amit S on 23/08/18.
@@ -27,7 +36,9 @@ public class DronesListDialog extends BottomSheetDialog {
     private final MapsActivity activity;
 
 
-    private ImageView groupIcon;
+    private String groupName;
+    private List<Drone> group = new ArrayList<>();
+    private DronesAdapter dronesAdapter;
 
     public DronesListDialog(@NonNull MapsActivity context) {
         super(context);
@@ -40,35 +51,63 @@ public class DronesListDialog extends BottomSheetDialog {
 
         setContentView(R.layout.list_drones);
 
-        groupIcon = findViewById(R.id.icon_group);
-        groupIcon.setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.algorithm_btn).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                showCheckBoxes();
+                if (!group.isEmpty()) {
+                    activity.showAlgorithmList(new ArrayList<Drone>(group));
+                    group.clear();
+                } else {
+                    Toast.makeText(activity, "Group size is empty", Toast.LENGTH_SHORT).show();
+                }
+
+            }
+        });
+        findViewById(R.id.group_btn).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                askGroupName();
             }
         });
         BottomSheetListView listView = (BottomSheetListView) findViewById(R.id.listViewBtmSheet);
-        DronesAdapter dronesAdapter = new DronesAdapter(KnowledgeBaseUtil.getInstance().getDrones(), getContext());
+        dronesAdapter = new DronesAdapter(KnowledgeBaseUtil.getInstance().getDrones(), getContext());
         listView.setAdapter(dronesAdapter);
+
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                activity.showAlgorithmList(KnowledgeBaseUtil.getInstance().getDrones().get(i));
+                ((CheckableRelativeLayout) view).toggle();
             }
         });
 
     }
 
-    private void showCheckBoxes() {
-        findViewById(R.id.create_group).setVisibility(View.VISIBLE);
-        findViewById(R.id.create_group).setOnClickListener(new View.OnClickListener() {
+    private void askGroupName() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        final EditText grpName = new EditText(getContext());
+        builder.setTitle("Enter group name").setView(grpName).setPositiveButton("OK", new OnClickListener() {
             @Override
-            public void onClick(View view) {
+            public void onClick(DialogInterface dialogInterface, int i) {
+                groupName = grpName.getText().toString();
+                if (groupName.length() == 0) {
+                    Toast.makeText(activity, "Group name cannot be empty", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (!group.isEmpty()) {
+                    try {
+                        KnowledgeBaseUtil.getInstance().createGroup(groupName, group);
+                    } catch (MadaraDeadObjectException e) {
+                        Toast.makeText(activity, "Unable to create group " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                    group.clear();
+                } else {
+                    Toast.makeText(activity, "Group size is empty", Toast.LENGTH_SHORT).show();
+                }
 
             }
-        });
-
+        }).setNegativeButton("Cancel", null).create().show();
     }
 
     private class DronesAdapter extends BaseAdapter {
@@ -103,6 +142,20 @@ public class DronesListDialog extends BottomSheetDialog {
             }
 
             Drone d = (Drone) getItem(i);
+
+            CheckBox checkBox = ((CheckBox) view.findViewById(R.id.checkbox));
+            checkBox.setTag(d);
+
+            checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    if (b) {
+                        group.add((Drone) compoundButton.getTag());
+                    } else {
+                        group.remove(compoundButton.getTag());
+                    }
+                }
+            });
 
             ((TextView) view.findViewById(R.id.agent_name)).setText(d.username);
             ((TextView) view.findViewById(R.id.agent_lastSeen)).setText("" + new Date(d.lastUpdatedTime));

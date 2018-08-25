@@ -15,6 +15,7 @@ public class AlgorithmsFactory {
         algoMap.put("UREC", new URECAlgorithm());
         algoMap.put("Move", new MoveAlgorithm());
         algoMap.put("Waypoints Coverage Area", new WaypointsCoverageAlgorithm());
+        algoMap.put("PWRAC", new PWRACAlgorithm());
 
     }
 

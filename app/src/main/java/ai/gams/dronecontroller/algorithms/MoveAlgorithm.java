@@ -15,8 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ai.gams.dronecontroller.utils.KnowledgeBaseUtil;
 import ai.gams.dronecontroller.model.Drone;
+import ai.gams.dronecontroller.utils.KnowledgeBaseUtil;
 import ai.madara.exceptions.MadaraDeadObjectException;
 
 /**
@@ -66,7 +66,6 @@ public class MoveAlgorithm implements AlgorithmIntf {
 
     }
 
-
     @Override
     public void send() {
         String rep = "1";
@@ -78,7 +77,7 @@ public class MoveAlgorithm implements AlgorithmIntf {
 
         for (Drone drone : drones) {
             Map<String, String> params = new HashMap<>();
-            String prefix = "agent." + drone.getId();
+            String prefix = drone.prefix;
             params.put(prefix + ".algorithm", "waypoints");
             params.put(prefix + ".algorithm.args.repeat", rep);
             params.put(prefix + ".algorithm.args.locations.size", "" + locations.size());

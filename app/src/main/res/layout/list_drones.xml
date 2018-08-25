@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/bottom_sheet"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="500dp"
     android:background="@android:color/white"
     android:orientation="vertical">
 
@@ -22,20 +22,17 @@
         android:gravity="right"
         android:orientation="horizontal">
 
-        <ImageView
-            android:id="@+id/icon_group"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_gravity="center_vertical"
-            android:layout_marginRight="10dp"
-            android:src="@drawable/ic_group" />
-
         <Button
-            android:id="@+id/create_group"
+            android:id="@+id/group_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Create"
-            android:visibility="gone" />
+            android:text="+Group" />
+
+        <Button
+            android:id="@+id/algorithm_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Algorithm" />
     </LinearLayout>
 
     <ai.gams.dronecontroller.ui.widget.BottomSheetListView

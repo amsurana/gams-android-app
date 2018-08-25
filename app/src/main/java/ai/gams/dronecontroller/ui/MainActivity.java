@@ -8,9 +8,9 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import ai.gams.dronecontroller.utils.KnowledgeBaseUtil;
 import ai.gams.dronecontroller.R;
 import ai.gams.dronecontroller.model.Drone;
+import ai.gams.dronecontroller.utils.KnowledgeBaseUtil;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -42,38 +42,5 @@ public class MainActivity extends AppCompatActivity {
         finish();
 
     }
-
-//    private class InitKbAsyncTask extends AsyncTask<Void, Void, Integer> {
-//        @Override
-//        protected void onPostExecute(Integer integer) {
-//            super.onPostExecute(integer);
-//            if (integer == 1) {
-//                startActivity(new Intent(MainActivity.this, MapsActivity.class));
-//                finish();
-//            } else {
-//                Toast.makeText(MainActivity.this, "Could not initialize Controller. Try again", Toast.LENGTH_SHORT).show();
-//                findViewById(R.id.progress).setVisibility(View.INVISIBLE);
-//            }
-//        }
-//
-//        @Override
-//        protected Integer doInBackground(Void... voids) {
-//            try {
-//                int tries = 0;
-//                while (!KnowledgeBaseUtil.getInstance().isInitialized() && ++tries < 10) {
-//                    Thread.sleep(10000);
-//                    if (KnowledgeBaseUtil.getInstance().isInitialized()) {
-//                        return 1;
-//                    }
-//                    KnowledgeBaseUtil.getInstance().reInit();
-//                }
-//
-//
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//            return 0;
-//        }
-//    }
 
 }

@@ -3,6 +3,7 @@ package ai.gams.dronecontroller.utils;
 import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -290,4 +291,16 @@ public class KnowledgeBaseUtil implements AggregateFilter {
     }
 
 
+    public void createGroup(String groupName, List<Drone> group) throws MadaraDeadObjectException {
+        //Convert to what KB requires
+        groupName = "group." + groupName;
+        Map<String, String> params = new HashMap<>();
+        params.put(groupName + ".members.size", Integer.toString(group.size()));
+        int index = 0;
+        for (Drone drone : group) {
+            params.put(groupName + ".members." + (index++), drone.prefix);
+        }
+
+        sendData(params);
+    }
 }

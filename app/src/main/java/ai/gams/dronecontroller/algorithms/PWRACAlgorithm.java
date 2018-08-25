@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import ai.gams.dronecontroller.model.Drone;
 import ai.gams.dronecontroller.utils.KnowledgeBaseUtil;
@@ -68,7 +69,7 @@ public class PWRACAlgorithm implements AlgorithmIntf {
                 if (polygon == null) {
                     polygon = map.addPolygon(new PolygonOptions()
                             .add(locations.toArray(new LatLng[0]))
-                            .strokeColor(Color.GREEN)
+                            .strokeColor(Color.CYAN)
                             .fillColor(Color.argb(100, 0xd5, 0xd5, 0xd5)));
                 } else {
                     polygon.setPoints(locations);
@@ -91,23 +92,25 @@ public class PWRACAlgorithm implements AlgorithmIntf {
 
         for (Drone drone : drones) {
             Map<String, String> params = new HashMap<>();
-            String dronePrefix = "agent." + drone.getId();
+            String dronePrefix = drone.prefix;
 
 
             /**
-             * region.0.object_type=1;
+             region.0.object_type=1;
              region.0.type=0;
              region.0.size=4;
              region.0.0=[40.443237, -79.940570];
              region.0.1=[40.443387, -79.940270];
              region.0.2=[40.443187, -79.940098];
-             region.0.3=[40.443077, -79.940398
+             region.0.3=[40.443077, -79.940398];
              */
 
 
             String regionPrefix = "region." + drone.getId();
 
             params.put(regionPrefix + ".type", "0");
+            //Hard-coded at the moment
+            params.put(regionPrefix + ".priority", "" + new Random().nextInt(100));
             params.put(regionPrefix + ".size", "" + locations.size());
 
             int i = 0;

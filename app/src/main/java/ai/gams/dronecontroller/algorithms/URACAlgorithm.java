@@ -18,8 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ai.gams.dronecontroller.utils.KnowledgeBaseUtil;
 import ai.gams.dronecontroller.model.Drone;
+import ai.gams.dronecontroller.utils.KnowledgeBaseUtil;
 import ai.madara.exceptions.MadaraDeadObjectException;
 
 /**
@@ -91,7 +91,7 @@ public class URACAlgorithm implements AlgorithmIntf {
 
         for (Drone drone : drones) {
             Map<String, String> params = new HashMap<>();
-            String agentPrefix = "agent." + drone.getId();
+            String agentPrefix = drone.prefix;
 
 
             /**

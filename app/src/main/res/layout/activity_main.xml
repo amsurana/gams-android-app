@@ -21,8 +21,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-
-            android:text="Please enter a name to identify yourself in the network. Please ensure you are on WiFi as the app sends/receives data via multicast 239.255.0.1:4150"
+            android:text="Please enter a name to identify yourself in the network. Do ensure that you are on WiFi as the app sends/receives data via multicast 239.255.0.1:4150"
             android:textSize="18sp" />
 
         <EditText

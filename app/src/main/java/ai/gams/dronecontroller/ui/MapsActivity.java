@@ -44,7 +44,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private GoogleMap mMap;
 
-    private Drone selecedDrone;
+    private Drone selectedDrone;
     private Map<Drone, Marker> droneMarkerMap = new HashMap<>();
 
     private Handler handler = new Handler();
@@ -95,6 +95,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean onOptionsItemSelected(MenuItem item) {
         KnowledgeBaseUtil.getInstance().cleanup();
         finish();
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -149,7 +150,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             drone.latLng = latLng;
 
             MarkerOptions options = new MarkerOptions().position(latLng).title(drone.username);
-            options.icon(BitmapDescriptorFactory.defaultMarker(10));
+            options.icon(BitmapDescriptorFactory.defaultMarker(5));
 
             Marker marker = mMap.addMarker(options);
 
@@ -191,10 +192,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void moveTop() {
 
-
         double distance = new Random().nextInt(20);
         double bearing = 0;
-
         sendMove(distance, bearing);
 
     }
@@ -243,34 +242,32 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void sendMove(double distance, double bearing) {
         try {
-            if (!droneMarkerMap.containsKey(selecedDrone)) {
+            if (!droneMarkerMap.containsKey(selectedDrone)) {
                 Toast.makeText(this, "The current device is not shown on Map", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            Marker marker = droneMarkerMap.get(selecedDrone);
+            Marker marker = droneMarkerMap.get(selectedDrone);
             LatLng next = getNewLatLng(marker.getPosition(), distance, bearing);
             marker.remove();
 
-
-            KnowledgeBaseUtil.getInstance().sendData("agent." + selecedDrone.getId() + ".location", String.format("%.3f, %.3f, 10", next.latitude, next.longitude));
+            KnowledgeBaseUtil.getInstance().sendData("agent." + selectedDrone.getId() + ".location", String.format("%.3f, %.3f, 10", next.latitude, next.longitude));
         } catch (MadaraDeadObjectException e) {
             e.printStackTrace();
         }
     }
 
 
-    public void showAlgorithmList(final Drone selecedDrone) {
+    public void showAlgorithmList(final List<Drone> drones) {
         dronesListDialog.dismiss();
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         final List<String> algoNames = new ArrayList<String>(AlgorithmsFactory.algoMap.keySet());
-        builder.setTitle("Send Algorithm to " + selecedDrone.username);
+        builder.setTitle("Send Algorithm to selected Agents");
         builder.setItems(algoNames.toArray(new String[0]), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 findViewById(R.id.send).setVisibility(View.VISIBLE);
-                List<Drone> drones = new ArrayList<>();
-                drones.add(selecedDrone);
+
                 algorithmIntf = AlgorithmsFactory.getAlgorithmInstance(algoNames.get(i));
                 algorithmIntf.start(MapsActivity.this, drones, mMap);
             }
