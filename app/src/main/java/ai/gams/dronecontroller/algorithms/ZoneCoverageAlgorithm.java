@@ -25,7 +25,7 @@ import ai.madara.exceptions.MadaraDeadObjectException;
 /**
  * Created by Amit S on 27/07/18.
  */
-public class URACAlgorithm implements AlgorithmIntf {
+public class ZoneCoverageAlgorithm implements AlgorithmIntf {
 
     private List<LatLng> locations = new ArrayList<>();
     private List<Marker> markers = new ArrayList<>();
@@ -33,8 +33,9 @@ public class URACAlgorithm implements AlgorithmIntf {
     private Context context;
     private GoogleMap map;
     private Polygon polygon;
+    private Drone headDrone;
 
-    public URACAlgorithm() {
+    public ZoneCoverageAlgorithm() {
 
     }
 
@@ -48,34 +49,58 @@ public class URACAlgorithm implements AlgorithmIntf {
         locations.clear();
         markers.clear();
 
+        selectHeadList(droneList);
+
+    }
+
+    private void selectHeadList(List<Drone> droneList) {
+        List<String> prefixes = new ArrayList<>();
+        for (Drone d : droneList) {
+            prefixes.add(d.prefix);
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setSingleChoiceItems(prefixes.toArray(new String[0]), -1, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                headDrone = drones.get(i);
+                startDrawPolygonStep(map);
+                dialogInterface.dismiss();
+            }
+        }).create().show();
+
+    }
+
+    private void startDrawPolygonStep(final GoogleMap map) {
+
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
 
         builder.setMessage("Long press on map to create a polygon for Area algorithm. Press 'Send' button to execute the algorithm then").setTitle("Instructions").setPositiveButton("Start", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                initAlgorithm(map);
-            }
-        });
-        builder.create().show();
-    }
 
-    private void initAlgorithm(final GoogleMap map) {
-        map.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
-            @Override
-            public void onMapLongClick(LatLng latLng) {
-                locations.add(latLng);
-                Marker marker = map.addMarker(new MarkerOptions().position(latLng));
-                if (polygon == null) {
-                    polygon = map.addPolygon(new PolygonOptions()
-                            .add(locations.toArray(new LatLng[0]))
-                            .strokeColor(Color.GREEN)
-                            .fillColor(Color.argb(100, 0xd5, 0xd5, 0xd5)));
-                } else {
-                    polygon.setPoints(locations);
-                }
-                markers.add(marker);
+                map.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+                    @Override
+                    public void onMapLongClick(LatLng latLng) {
+                        locations.add(latLng);
+                        Marker marker = map.addMarker(new MarkerOptions().position(latLng));
+                        if (polygon == null) {
+                            polygon = map.addPolygon(new PolygonOptions()
+                                    .add(locations.toArray(new LatLng[0]))
+                                    .strokeColor(Color.GREEN)
+                                    .fillColor(Color.argb(100, 0xd5, 0xd5, 0xd5)));
+                        } else {
+                            polygon.setPoints(locations);
+                        }
+                        markers.add(marker);
+                    }
+                });
+
             }
         });
+
+        builder.create().show();
+
 
     }
 
@@ -115,8 +140,15 @@ public class URACAlgorithm implements AlgorithmIntf {
                 params.put(regionPrefix + "." + (i++), String.format("[%f,%f]", latLng.latitude, latLng.longitude));
             }
 
-            params.put(agentPrefix + ".algorithm", "urac");
-            params.put(agentPrefix + ".algorithm.args.area", regionPrefix);
+            params.put(agentPrefix + ".algorithm", "formation coverage");
+
+            params.put(agentPrefix + ".algorithm.args.head", headDrone.prefix);
+            params.put(agentPrefix + ".algorithm.args.offset", "[0,0,0]");
+            params.put(agentPrefix + ".algorithm.args.group", "group.formation");
+            params.put(agentPrefix + ".algorithm.args.modifier", "default");
+
+            params.put(agentPrefix + ".algorithm.args.coverage", "urec");
+            params.put(agentPrefix + ".algorithm.args.coverage.args.area", regionPrefix);
 
             for (Marker m : markers) {
                 m.remove();

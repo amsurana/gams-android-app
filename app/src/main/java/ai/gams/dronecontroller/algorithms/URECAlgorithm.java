@@ -105,19 +105,19 @@ public class URECAlgorithm implements AlgorithmIntf {
              */
 
 
-            String region = "region." + drone.getId();
+            String regionPrefix = "region." + drone.getId();
 
-            params.put(region + ".object_type", "1");
-            params.put(region + ".type", "0");
-            params.put(region + ".size", "" + locations.size());
+            params.put(regionPrefix + ".object_type", "1");
+            params.put(regionPrefix + ".type", "0");
+            params.put(regionPrefix + ".size", "" + locations.size());
 
             int i = 0;
             for (LatLng latLng : locations) {
-                params.put(region + "." + (i++), String.format("[%f,%f]", latLng.latitude, latLng.longitude));
+                params.put(regionPrefix + "." + (i++), String.format("[%f,%f]", latLng.latitude, latLng.longitude));
             }
 
             params.put(prefix + ".algorithm", "urec");
-            params.put(prefix + ".algorithm.args.area", region);
+            params.put(prefix + ".algorithm.args.area", regionPrefix);
 
             for (Marker m : markers) {
                 m.remove();

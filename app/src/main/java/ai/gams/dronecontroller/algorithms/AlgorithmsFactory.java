@@ -8,18 +8,36 @@ import java.util.Map;
  */
 public class AlgorithmsFactory {
 
-    public static Map<String, AlgorithmIntf> algoMap = new HashMap<>();
+    public static Map<String, Class<? extends AlgorithmIntf>> algoMap = new HashMap<>();
 
     static {
-        algoMap.put("URAC ", new URACAlgorithm());
-        algoMap.put("UREC", new URECAlgorithm());
-        algoMap.put("Move", new MoveAlgorithm());
-        algoMap.put("Waypoints Coverage Area", new WaypointsCoverageAlgorithm());
-        algoMap.put("PWRAC", new PWRACAlgorithm());
+//This can be extended for other algorithms
+        algoMap.put("URAC ", URACAlgorithm.class);
+        algoMap.put("UREC", URECAlgorithm.class);
+        algoMap.put("Move", MoveAlgorithm.class);
+        algoMap.put("Waypoints coverage", WaypointsCoverageAlgorithm.class);
+        algoMap.put("PWRAC", PWRACAlgorithm.class);
+        algoMap.put("Formation", FormationAlgorithm.class);
+
+//        algoMap.put("URAC ", new URACAlgorithm());
+//        algoMap.put("UREC", new URECAlgorithm());
+//        algoMap.put("Move", new MoveAlgorithm());
+//        algoMap.put("Waypoints coverage", new WaypointsCoverageAlgorithm());
+//        algoMap.put("PWRAC", new PWRACAlgorithm());
+//        algoMap.put("Formation", new FormationAlgorithm());
 
     }
 
     public static AlgorithmIntf getAlgorithmInstance(String type) {
-        return algoMap.get(type);
+
+        try {
+            return algoMap.get(type).newInstance();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }
